@@ -14,8 +14,9 @@
     /* Видеофон/канвас на весь контейнер без “письма” */
     #ar canvas, #ar video { width:100% !important; height:100% !important; object-fit:cover; }
   </style>
-  </head>
-  <body style="margin:0; overflow:hidden;">
+</head>
+<body>
+  <div id="ar">
     <a-scene
       mindar-image="imageTargetSrc: ./targets.mind;"
       vr-mode-ui="enabled: false"
@@ -29,10 +30,17 @@
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity mindar-image-target="targetIndex: 0">
-        <a-gltf-model src="#m" position="0 0 0" scale="0.6 0.6 0.6"></a-gltf-model>
+        <a-gltf-model src="#m" position="0 0 0" scale="0.8 0.8 0.8"></a-gltf-model>
       </a-entity>
     </a-scene>
-  </body>
-</html>
+  </div>
+
+  <script>
+    // Форс-ресайз, когда адресная строка прячет/показываетcя
+    const scene = document.querySelector('a-scene');
+    window.addEventListener('resize', () => scene && scene.resize && scene.resize());
+  </script>
+</body>
+
 
 
