@@ -1,21 +1,23 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>WebAR Scene</title>
+    <title>Custom Marker AR</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.rawgit.com/jeromeetienne/ar.js/1.7.2/aframe/build/aframe-ar.min.js"></script>
   </head>
   <body style="margin: 0; overflow: hidden;">
     <a-scene embedded arjs>
-      <!-- Marker for triggering AR (use default Hiro marker or replace with your own) -->
+      <!-- Custom Marker -->
       <a-marker type="pattern" url="pattern-mg-marker.patt">
-        <!-- Your Blender-exported glTF model -->
-        <a-entity gltf-model="url(model.glb)" scale="0.5 0.5 0.5"></a-entity>
+        <!-- Your GLTF Model -->
+        <a-entity gltf-model="model.glb" scale="5 5 5"></a-entity>
       </a-marker>
+
+      <!-- Lighting -->
+      <a-entity light="type: ambient; color: #ffffff; intensity: 1"></a-entity>
 
       <!-- Camera -->
       <a-entity camera></a-entity>
     </a-scene>
   </body>
 </html>
-
