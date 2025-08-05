@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- MindAR + A-Frame (актуальные версии из доков) -->
-<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-     <style>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <style>
     html, body { margin:0; padding:0; height:100%; background:#000; }
     /* Контейнер на весь экран с учетом адресной строки и вырезов */
     #ar { position:fixed; inset:0; width:100vw; height:100dvh; overflow:hidden; }
@@ -41,6 +39,3 @@
     window.addEventListener('resize', () => scene && scene.resize && scene.resize());
   </script>
 </body>
-
-
-
