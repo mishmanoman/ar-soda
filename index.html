@@ -5,6 +5,15 @@
     <!-- MindAR + A-Frame (актуальные версии из доков) -->
 <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+     <style>
+    html, body { margin:0; padding:0; height:100%; background:#000; }
+    /* Контейнер на весь экран с учетом адресной строки и вырезов */
+    #ar { position:fixed; inset:0; width:100vw; height:100dvh; overflow:hidden; }
+    /* A-Frame сцена тянется по контейнеру */
+    #ar a-scene { width:100%; height:100%; }
+    /* Видеофон/канвас на весь контейнер без “письма” */
+    #ar canvas, #ar video { width:100% !important; height:100% !important; object-fit:cover; }
+  </style>
   </head>
   <body style="margin:0; overflow:hidden;">
     <a-scene
@@ -25,4 +34,5 @@
     </a-scene>
   </body>
 </html>
+
 
