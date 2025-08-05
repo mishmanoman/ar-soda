@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Custom Marker AR</title>
+    <title>Surface Tracking AR</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.rawgit.com/jeromeetienne/ar.js/1.7.2/aframe/build/aframe-ar.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.3.2/aframe/build/aframe-ar-nft.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
   </head>
   <body style="margin: 0; overflow: hidden;">
-    <a-scene embedded arjs>
-      <!-- Custom Marker -->
-      <a-marker type="pattern" url="pattern-mg-marker.patt">
-        <!-- Your GLTF Model -->
-        <a-entity gltf-model="model.glb" scale="5 5 5"></a-entity>
-      </a-marker>
+    <a-scene embedded vr-mode-ui="enabled: false" renderer="logarithmicDepthBuffer: true;" arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+
+      <!-- Ground Plane -->
+      <a-entity id="ground" geometry="primitive: plane; width: 10; height: 10;" rotation="-90 0 0" material="color: #AAAAAA; opacity: 0.0;"></a-entity>
+
+      <!-- Your Model -->
+      <a-entity gltf-model="model.glb" position="0 0 0" scale="1 1 1"></a-entity>
 
       <!-- Lighting -->
       <a-entity light="type: ambient; color: #ffffff; intensity: 1"></a-entity>
+      <a-entity light="type: directional; color: #ffffff; intensity: 0.5" position="0 1 1"></a-entity>
 
       <!-- Camera -->
       <a-entity camera></a-entity>
