@@ -1,41 +1,346 @@
+<!DOCTYPE html>
+<html lang="ru">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-  <style>
-    html, body { margin:0; padding:0; height:100%; background:#000; }
-    /* Контейнер на весь экран с учетом адресной строки и вырезов */
-    #ar { position:fixed; inset:0; width:100vw; height:100dvh; overflow:hidden; }
-    /* A-Frame сцена тянется по контейнеру */
-    #ar a-scene { width:100%; height:100%; }
-    /* Видеофон/канвас на весь контейнер без “письма” */
-    #ar canvas, #ar video { width:100% !important; height:100% !important; object-fit:cover; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>WebAR без маркера</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background: #000;
+        }
+        
+        /* Model Viewer стили */
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            background-color: transparent;
+            --poster-color: transparent;
+        }
+        
+        /* UI оверлей */
+        #ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+        
+        .status-message {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            align-self: center;
+            max-width: 300px;
+        }
+        
+        .ar-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            pointer-events: all;
+            align-self: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            margin-bottom: 40px;
+        }
+        
+        .ar-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .ar-button:disabled {
+            background: rgba(255, 255, 255, 0.3);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .control-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            pointer-events: all;
+            backdrop-filter: blur(10px);
+            transition: all 0.2s ease;
+        }
+        
+        .control-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Адаптивность */
+        @media (orientation: landscape) {
+            #ui-overlay {
+                padding: 10px 20px;
+            }
+            
+            .ar-button {
+                margin-bottom: 20px;
+            }
+        }
+        
+        /* Безопасная зона для устройств с вырезом */
+        @supports (padding: max(0px)) {
+            #ui-overlay {
+                padding-top: max(env(safe-area-inset-top), 20px);
+                padding-left: max(env(safe-area-inset-left), 20px);
+                padding-right: max(env(safe-area-inset-right), 20px);
+                padding-bottom: max(env(safe-area-inset-bottom), 20px);
+            }
+        }
+        
+        /* Индикатор загрузки */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            text-align: center;
+        }
+        
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 2px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Скрытие элементов в AR режиме */
+        model-viewer[ar-status="session-started"] ~ #ui-overlay .controls,
+        model-viewer[ar-status="session-started"] ~ #ui-overlay .status-message {
+            display: none;
+        }
+    </style>
+    
+    <!-- Model Viewer -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
 </head>
 <body>
-  <div id="ar">
-    <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind;"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
-      embedded
-    >
-      <a-assets>
-        <a-asset-item id="m" src="model.glb"></a-asset-item>
-      </a-assets>
+    <!-- 3D модель -->
+    <model-viewer
+        id="ar-model"
+        src="./model.glb"
+        ar
+        ar-modes="webxr scene-viewer quick-look"
+        ar-scale="fixed"
+        camera-controls
+        touch-action="pan-y"
+        auto-rotate
+        auto-rotate-delay="3000"
+        rotation-per-second="30deg"
+        loading="eager"
+        reveal="interaction"
+        environment-image="neutral"
+        shadow-intensity="1"
+        shadow-softness="0.5"
+        exposure="1">
+        
+        <!-- Кастомный индикатор загрузки -->
+        <div slot="progress-bar" class="loading">
+            <div class="spinner"></div>
+            <div>Загружаем 3D модель...</div>
+        </div>
+    </model-viewer>
+    
+    <!-- UI оверлей -->
+    <div id="ui-overlay">
+        <div class="status-message" id="status">
+            Коснитесь модели для взаимодействия
+        </div>
+        
+        <div>
+            <button class="ar-button" id="ar-button" disabled>
+                🚀 Запустить AR
+            </button>
+            
+            <div class="controls">
+                <button class="control-button" id="reset-btn">Сброс</button>
+                <button class="control-button" id="rotate-btn">Вращение</button>
+                <button class="control-button" id="scale-btn">Масштаб</button>
+            </div>
+        </div>
+    </div>
 
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-      <a-entity mindar-image-target="targetIndex: 0">
-        <a-gltf-model src="#m" position="0 0 0" scale="0.8 0.8 0.8"></a-gltf-model>
-      </a-entity>
-    </a-scene>
-  </div>
-
-  <script>
-    // Форс-ресайз, когда адресная строка прячет/показываетcя
-    const scene = document.querySelector('a-scene');
-    window.addEventListener('resize', () => scene && scene.resize && scene.resize());
-  </script>
+    <script>
+        const modelViewer = document.querySelector('#ar-model');
+        const arButton = document.querySelector('#ar-button');
+        const statusEl = document.querySelector('#status');
+        const resetBtn = document.querySelector('#reset-btn');
+        const rotateBtn = document.querySelector('#rotate-btn');
+        const scaleBtn = document.querySelector('#scale-btn');
+        
+        let currentScale = 1;
+        let autoRotateEnabled = true;
+        
+        // Проверка поддержки AR
+        modelViewer.addEventListener('ar-status', (event) => {
+            if (event.detail.status === 'not-presenting') {
+                arButton.textContent = '🚀 Запустить AR';
+                statusEl.textContent = 'Коснитесь модели для взаимодействия';
+            } else if (event.detail.status === 'session-started') {
+                statusEl.textContent = 'AR активен! Размещайте модель';
+            } else if (event.detail.status === 'failed') {
+                statusEl.textContent = 'AR недоступен в этом браузере';
+                arButton.disabled = true;
+                arButton.textContent = 'AR не поддерживается';
+            }
+        });
+        
+        // Обработка загрузки модели
+        modelViewer.addEventListener('load', () => {
+            console.log('3D модель загружена');
+            arButton.disabled = false;
+            arButton.textContent = '🚀 Запустить AR';
+            statusEl.textContent = 'Модель готова! Нажмите AR для размещения';
+        });
+        
+        modelViewer.addEventListener('error', (e) => {
+            console.error('Ошибка загрузки модели:', e);
+            statusEl.textContent = 'Ошибка загрузки модели';
+            arButton.disabled = true;
+            arButton.textContent = 'Ошибка загрузки';
+        });
+        
+        // AR кнопка
+        arButton.addEventListener('click', () => {
+            if (modelViewer.canActivateAR) {
+                modelViewer.activateAR();
+            } else {
+                statusEl.textContent = 'AR недоступен. Попробуйте другой браузер';
+            }
+        });
+        
+        // Управление
+        resetBtn.addEventListener('click', () => {
+            modelViewer.resetTurntableRotation();
+            modelViewer.jumpCameraToGoal();
+            currentScale = 1;
+            statusEl.textContent = 'Модель сброшена';
+            setTimeout(() => {
+                statusEl.textContent = 'Коснитесь модели для взаимодействия';
+            }, 2000);
+        });
+        
+        rotateBtn.addEventListener('click', () => {
+            autoRotateEnabled = !autoRotateEnabled;
+            if (autoRotateEnabled) {
+                modelViewer.setAttribute('auto-rotate', '');
+                rotateBtn.textContent = 'Остановить';
+                statusEl.textContent = 'Автовращение включено';
+            } else {
+                modelViewer.removeAttribute('auto-rotate');
+                rotateBtn.textContent = 'Вращение';
+                statusEl.textContent = 'Автовращение выключено';
+            }
+            setTimeout(() => {
+                statusEl.textContent = 'Коснитесь модели для взаимодействия';
+            }, 2000);
+        });
+        
+        scaleBtn.addEventListener('click', () => {
+            currentScale = currentScale === 1 ? 0.5 : currentScale === 0.5 ? 2 : 1;
+            modelViewer.scale = `${currentScale} ${currentScale} ${currentScale}`;
+            statusEl.textContent = `Масштаб: ${currentScale}x`;
+            setTimeout(() => {
+                statusEl.textContent = 'Коснитесь модели для взаимодействия';
+            }, 2000);
+        });
+        
+        // Проверка поддержки WebXR
+        if ('xr' in navigator) {
+            navigator.xr.isSessionSupported('immersive-ar')
+                .then((supported) => {
+                    if (!supported) {
+                        console.log('WebXR AR не поддерживается, используем fallback');
+                        statusEl.textContent = 'AR работает через Scene Viewer';
+                    }
+                })
+                .catch(() => {
+                    console.log('WebXR недоступен');
+                });
+        }
+        
+        // Обработка касаний для мобильных устройств
+        let touchStartTime = 0;
+        modelViewer.addEventListener('touchstart', () => {
+            touchStartTime = Date.now();
+        });
+        
+        modelViewer.addEventListener('touchend', () => {
+            const touchDuration = Date.now() - touchStartTime;
+            if (touchDuration < 200) { // Быстрое касание
+                statusEl.textContent = 'Используйте жесты для поворота и масштаба';
+                setTimeout(() => {
+                    statusEl.textContent = 'Коснитесь модели для взаимодействия';
+                }, 3000);
+            }
+        });
+        
+        // Установка правильной высоты для мобильных устройств
+        function setVH() {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+        
+        setVH();
+        window.addEventListener('resize', setVH);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(setVH, 100);
+        });
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            statusEl.textContent = 'Загружаем AR-модель...';
+        });
+    </script>
 </body>
+</html>
